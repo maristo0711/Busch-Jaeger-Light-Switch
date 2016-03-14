@@ -1,0 +1,41 @@
+metadata {
+    definition (name: "Busch-Jaeger Test", namespace: "maristo0711", author: "Bastian") {
+		capability "Button"
+		capability "Configuration"
+
+        fingerprint profileId: "C05E", inClusters: "0000, 1000", outClusters: "1000, 0003, 0006, 0008, 0004, 0005, 0300, 0019"
+    }
+
+	// UI tile definitions
+	tiles {
+		standardTile("button", "device.button", width: 2, height: 2) {
+			state "default", label: "", icon: "st.unknown.zwave.remote-controller", backgroundColor: "#ffffff"
+		}
+		main "button"
+		details(["button"])
+	}
+}
+
+// Parse incoming device messages to generate events
+def parse(String description) {
+    log.debug "description is $description"
+
+    def event = zigbee.getEvent(description)
+    if (event) {
+        sendEvent(event)
+    }
+    else {
+        log.warn "DID NOT PARSE MESSAGE for description : $description"
+        log.debug zigbee.parseDescriptionAsMap(description)
+    }
+}
+
+def configure() {
+    log.debug "Configuring Reporting and Bindings."
+		def configCmds = [	
+		
+			// Bind the outgoing on/off cluster from remote to hub, so remote sends hub messages when On/Off buttons pushed
+        	"zdo bind 0x${device.deviceNetworkId} 1 1 6 {${device.zigbeeId}} {}", "delay 1000",
+			]
+    return configCmds  
+}
